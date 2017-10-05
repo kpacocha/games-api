@@ -45,7 +45,16 @@ function getPlays(req,res) {
 
         console.log('connected as id  ' + connection.threadId);
         
-        connection.query("select * from plays",function(err,rows){
+        connection.query(" \
+          SELECT `plays`.`playId`, date, GROUP_CONCAT(login, ':', result) as results, gameName FROM `plays`\
+          LEFT OUTER JOIN `userplays`\
+          on `userplays`.`playId` = `plays`.`playId`\
+          inner join `users`\
+          on `userplays`.`userId` = `users`.`userId`\
+          inner join `games`\
+          on `plays`.`gameId` = `games`.`gameId`\
+          GROUP BY `playId`\
+          ",function(err,rows){
             connection.release();
             if(!err) {
                 res.json(rows);
