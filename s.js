@@ -1,6 +1,14 @@
+
+//    port    = parseInt(process.env.PORT, 10) || 8080;
+
+
+var bodyParser = require('body-parser')
 var express   =    require("express");
 var mysql     =    require('mysql');
 var app       =    express();
+var    expressValidator = require('express-validator');
+var    path     = require('path')
+
 
 var pool      =    mysql.createPool({
     connectionLimit : 100, //important
@@ -10,6 +18,11 @@ var pool      =    mysql.createPool({
     database : 'gamesdb',
     debug    :  false
 });
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.urlencoded({ extended: true })); //support x-www-form-urlencoded
+app.use(bodyParser.json());
+app.use(expressValidator());
 
 function getGames(req,res) {
     
@@ -92,6 +105,35 @@ function getUsers(req,res) {
   });
 }
 
+function addGame(req,res) {
+    
+    pool.getConnection(function(err,connection){
+        if (err) {
+          res.json({"code" : 100, "status" : "Error in connection database"});
+          return;
+        }   
+
+        console.log('connected as id  ' + connection.threadId);
+        
+        connection.query("INSERT INTO games (gameName) VALUES ('" + req.body.gameName + "')",function(err,rows){
+            connection.release();
+            if(!err) {
+                res.json(rows);
+            }           
+        });
+
+    //     res.send(JSON.stringify({
+    //   gameName: req.body.gameName || null
+    // }));
+
+        connection.on('error', function(err) {      
+              res.json({"code" : 100, "status" : "Error in connection database"});
+              return;     
+        });
+  });
+}
+
+
 // Add headers
 app.use(function (req, res, next) {
 
@@ -108,6 +150,8 @@ app.use(function (req, res, next) {
     // to the API (e.g. in case you use sessions)
     res.setHeader('Access-Control-Allow-Credentials', true);
 
+    res.setHeader('Content-Type', 'application/json');
+
     // Pass to next layer of middleware
     next();
 });
@@ -122,8 +166,20 @@ app.get("/users",function(req,res){-
         getUsers(req,res);
 });
 
+app.post('/addGame',function(req, res){
+  addGame(req, res);
+
+    // res.send(JSON.stringify({
+    //   gameName: req.body.gameName || null
+    // }));
+
+  //debugging output for the terminal
+  console.log('you posted: gameName: ' + req.body.gameName);
+});
+
+
 app.listen(3001,function(){
 
-   console.log("Listening...");
+   console.log("Listening on 3001...");
 
 });

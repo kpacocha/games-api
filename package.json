@@ -2,11 +2,13 @@
   "name": "node-mysql",
   "version": "0.0.1",
   "dependencies": {
-    "body-parser": "^1.9.0",
+    "body-parser": "^1.18.2",
     "ejs": "^1.0.0",
     "express": "^4.15.5",
     "express-myconnection": "^1.0.4",
     "express-validator": "^2.21.0",
-    "mysql": "^2.14.1"
+    "iconv-lite": "^0.4.19",
+    "mysql": "^2.14.1",
+    "qs": "^6.5.1"
   }
 }
