@@ -161,6 +161,31 @@ function addPlay(req,res) {
   });
 }
 
+function addUserPlay(req,res) {
+    
+    pool.getConnection(function(err,connection){
+        if (err) {
+          res.json({"code" : 100, "status" : "Error in connection database"});
+          return;
+        }   
+
+        console.log('connected as id  ' + connection.threadId);
+      // INSERT INTO `plays` (`playId`, `date`, `gameId`) VALUES (NULL, CURRENT_TIMESTAMP, '24');
+
+          connection.query(`INSERT INTO userplays (playId ,result, userId) VALUES ('${req.body.playId}','${req.body.result}','${req.body.userId}')`,function(err,rows){
+            connection.release();
+            if(!err) {
+                res.json(rows);
+            }           
+        });
+
+        connection.on('error', function(err) {      
+              res.json({"code" : 100, "status" : "Error in connection database"});
+              return;     
+        });
+  });
+}
+
 // Add headers
 app.use(function (req, res, next) {
 
@@ -201,6 +226,12 @@ app.post('/addGame',function(req, res){
 app.post('/addPlay',function(req, res){
   addPlay(req, res);
   console.log('you posted play, gameId: ' + req.body.gameId);
+});
+
+app.post('/addUserPlay',function(req, res){
+  addUserPlay(req, res);
+  console.log('you posted userPlay');
+  console.log(req.body);
 });
 
 app.listen(3001,function(){
