@@ -58,16 +58,23 @@ function getPlays(req,res) {
 
         console.log('connected as id  ' + connection.threadId);
         
-        connection.query(" \
-          SELECT `plays`.`playId`, date, GROUP_CONCAT(login, ':', result) as results, gameName FROM `plays`\
-          LEFT OUTER JOIN `userplays`\
-          on `userplays`.`playId` = `plays`.`playId`\
-          inner join `users`\
-          on `userplays`.`userId` = `users`.`userId`\
-          inner join `games`\
-          on `plays`.`gameId` = `games`.`gameId`\
-          GROUP BY `playId`\
-          ",function(err,rows){
+        // connection.query(" \
+        //   SELECT `plays`.`playId`, date, GROUP_CONCAT(login, ':', result) as results, gameName FROM `plays`\
+        //   LEFT OUTER JOIN `userplays`\
+        //   on `userplays`.`playId` = `plays`.`playId`\
+        //   inner join `users`\
+        //   on `userplays`.`userId` = `users`.`userId`\
+        //   inner join `games`\
+        //   on `plays`.`gameId` = `games`.`gameId`\
+        //   GROUP BY `playId`\
+        //   ",function(err,rows){
+        //     connection.release();
+        //     if(!err) {
+        //         res.json(rows);
+        //     }           
+        // });
+
+        connection.query("SELECT * FROM plays",function(err,rows){
             connection.release();
             if(!err) {
                 res.json(rows);
@@ -114,17 +121,13 @@ function addGame(req,res) {
         }   
 
         console.log('connected as id  ' + connection.threadId);
-        
-        connection.query("INSERT INTO games (gameName) VALUES ('" + req.body.gameName + "')",function(err,rows){
+
+        connection.query(`INSERT INTO games (gameName) VALUES ('${req.body.gameName}')`,function(err,rows){
             connection.release();
             if(!err) {
                 res.json(rows);
             }           
         });
-
-    //     res.send(JSON.stringify({
-    //   gameName: req.body.gameName || null
-    // }));
 
         connection.on('error', function(err) {      
               res.json({"code" : 100, "status" : "Error in connection database"});
@@ -133,6 +136,30 @@ function addGame(req,res) {
   });
 }
 
+function addPlay(req,res) {
+    
+    pool.getConnection(function(err,connection){
+        if (err) {
+          res.json({"code" : 100, "status" : "Error in connection database"});
+          return;
+        }   
+
+        console.log('connected as id  ' + connection.threadId);
+      // INSERT INTO `plays` (`playId`, `date`, `gameId`) VALUES (NULL, CURRENT_TIMESTAMP, '24');
+
+          connection.query(`INSERT INTO plays (date, gameId) VALUES ('${req.body.date}','${req.body.gameId}')`,function(err,rows){
+            connection.release();
+            if(!err) {
+                res.json(rows);
+            }           
+        });
+
+        connection.on('error', function(err) {      
+              res.json({"code" : 100, "status" : "Error in connection database"});
+              return;     
+        });
+  });
+}
 
 // Add headers
 app.use(function (req, res, next) {
@@ -168,15 +195,13 @@ app.get("/users",function(req,res){-
 
 app.post('/addGame',function(req, res){
   addGame(req, res);
-
-    // res.send(JSON.stringify({
-    //   gameName: req.body.gameName || null
-    // }));
-
-  //debugging output for the terminal
   console.log('you posted: gameName: ' + req.body.gameName);
 });
 
+app.post('/addPlay',function(req, res){
+  addPlay(req, res);
+  console.log('you posted play, gameId: ' + req.body.gameId);
+});
 
 app.listen(3001,function(){
 
