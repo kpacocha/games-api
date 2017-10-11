@@ -125,7 +125,7 @@ function addGame(req,res) {
         connection.query(`INSERT INTO games (gameName) VALUES ('${req.body.gameName}')`,function(err,rows){
             connection.release();
             if(!err) {
-                res.json(rows);
+                res.json({id: rows.insertId});
             }           
         });
 
@@ -136,7 +136,7 @@ function addGame(req,res) {
   });
 }
 
-function addPlay(req,res) {
+function addPlayToTable(req,res) {
     
     pool.getConnection(function(err,connection){
         if (err) {
@@ -150,7 +150,8 @@ function addPlay(req,res) {
           connection.query(`INSERT INTO plays (date, gameId) VALUES ('${req.body.date}','${req.body.gameId}')`,function(err,rows){
             connection.release();
             if(!err) {
-                res.json(rows);
+
+                res.json({id: rows.insertId});
             }           
         });
 
