@@ -80,28 +80,28 @@ function getPlays(req,res) {
 
         console.log('connected as id  ' + connection.threadId);
         
-        // connection.query(" \
-        //   SELECT `plays`.`playId`, date, GROUP_CONCAT(login, ':', result) as results, gameName FROM `plays`\
-        //   LEFT OUTER JOIN `userplays`\
-        //   on `userplays`.`playId` = `plays`.`playId`\
-        //   inner join `users`\
-        //   on `userplays`.`userId` = `users`.`userId`\
-        //   inner join `games`\
-        //   on `plays`.`gameId` = `games`.`gameId`\
-        //   GROUP BY `playId`\
-        //   ",function(err,rows){
-        //     connection.release();
-        //     if(!err) {
-        //         res.json(rows);
-        //     }           
-        // });
-
-        connection.query("SELECT * FROM plays",function(err,rows){
+        connection.query(" \
+          SELECT `plays`.`playId`, date, winner, GROUP_CONCAT(login, ':', result) as results, gameName FROM `plays`\
+          LEFT OUTER JOIN `userplays`\
+          on `userplays`.`playId` = `plays`.`playId`\
+          inner join `users`\
+          on `userplays`.`userId` = `users`.`userId`\
+          inner join `games`\
+          on `plays`.`gameId` = `games`.`gameId`\
+          GROUP BY `playId`\
+          ",function(err,rows){
             connection.release();
             if(!err) {
                 res.json(rows);
             }           
         });
+
+        // connection.query("SELECT * FROM plays",function(err,rows){
+        //     connection.release();
+        //     if(!err) {
+        //         res.json(rows);
+        //     }           
+        // });
 
         connection.on('error', function(err) {      
               res.json({"code" : 100, "status" : "Error in connection database"});
@@ -195,12 +195,16 @@ function addPlay(req,res) {
 
         console.log('connected as id  ' + connection.threadId);
       // INSERT INTO `plays` (`playId`, `date`, `gameId`) VALUES (NULL, CURRENT_TIMESTAMP, '24');
+        const winnerResult = req.body.results.reduce(function(prev, current) {
+          return (prev.y > current.y) ? prev : current
+        });
 
-        connection.query(`INSERT INTO plays (date, gameId) VALUES ('${req.body.date}','${req.body.gameId}')`,function(err,rows){
+        connection.query(`INSERT INTO plays (date, gameId, winner) VALUES ('${req.body.date}','${req.body.gameId}','${winnerResult.userId}')`,function(err,rows){
             connection.release();
             if(!err) {
                 console.log(`Play #${rows.insertId} is added`);
-                req.body.data.forEach( item => {
+
+                req.body.results.forEach( item => {
                   connection.query(`INSERT INTO userplays (playId ,result, userId) VALUES ('${rows.insertId}','${item.result}','${item.userId}')`,function(err,rows){
                     if(!err) {
                         console.log(`UserPlay #${rows.insertId} is added`);
